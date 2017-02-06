@@ -19,6 +19,7 @@ permissions and limitations under the License.
 
 
 var fs = require('fs');
+var fsExtra = require('fs-extra');
 var http = require('http');
 var https = require('https');
 var path = require('path');
@@ -40,12 +41,12 @@ var MAVEN_PACKAGE_LIST = [
   getMavenPackageInfo('com.fasterxml.jackson.dataformat', 'jackson-dataformat-cbor', '2.6.6'),
   getMavenPackageInfo('commons-logging', 'commons-logging', '1.1.3'),
   getMavenPackageInfo('commons-logging', 'commons-logging', '1.2'),
-  getMavenPackageInfo('com.amazonaws', 'amazon-kinesis-client', '1.6.5'),
+  // getMavenPackageInfo('com.amazonaws', 'amazon-kinesis-client', '1.6.5'),
   getMavenPackageInfo('com.fasterxml.jackson.core', 'jackson-core', '2.6.6'),
   getMavenPackageInfo('org.apache.httpcomponents', 'httpclient', '4.5.2'),
   getMavenPackageInfo('org.apache.httpcomponents', 'httpcore', '4.4.4'),
   getMavenPackageInfo('com.fasterxml.jackson.core', 'jackson-annotations', '2.6.6'),
-  getMavenPackageInfo('com.amazonaws', 'dynamodb-streams-kinesis-adapter', '1.1.1'),
+  // getMavenPackageInfo('com.amazonaws', 'dynamodb-streams-kinesis-adapter', '1.1.1'),
   getMavenPackageInfo('com.google.guava', 'guava', '19.0-rc2' ),
   getMavenPackageInfo('com.google.protobuf', 'protobuf-java', '2.6.1' ),
   getMavenPackageInfo('commons-lang','commons-lang','2.6'),
@@ -101,7 +102,18 @@ function parseArguments() {
   if ( args.stream ) {
     MULTI_LANG_DAEMON_CLASS = 'com.amazonaws.services.dynamodbv2/streamsadapter.StreamsMultiLangDaemon';
   }
+  moveIncludedJars(args.jarPath);
   return args;
+}
+
+function moveIncludedJars(jarPath) {
+  const includedJarsPath = path.join(__dirname, '..', 'lib', 'included-jars');
+  const includedJarsFilenames = fs.readdirSync(includedJarsPath);
+  includedJarsFilenames.forEach(function (includedJarsFilename) {
+    const adapterSourcePath = path.resolve(path.join(includedJarsPath, includedJarsFilename));
+    const adapterTargetPath = path.resolve(path.join(jarPath, includedJarsFilename));
+    fsExtra.copySync(adapterSourcePath, adapterTargetPath);
+  });
 }
 
 function startKinesisClientLibraryApplication(options) {
